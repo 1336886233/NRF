@@ -1,0 +1,5059 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NRF</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --accent: #fd79a8;
+            --success: #00b894;
+            --info: #0984e3;
+            --warning: #fdcb6e;
+            --danger: #d63031;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+        }
+        
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(90deg, #12c2e9, #c471ed, #f64f59);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(198, 148, 255, 0.3);
+        }
+        
+        .active-tab {
+            color: var(--accent);
+            position: relative;
+        }
+        
+        .active-tab::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 3px;
+            box-shadow: 0 0 10px var(--accent);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 46, 0.9);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+        
+        .main-content {
+            padding-bottom: 90px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px 0 rgba(31, 38, 135, 0.3);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(108, 92, 231, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, var(--success), #55efc4);
+            color: white;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 184, 148, 0.3);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 184, 148, 0.4);
+        }
+        
+        .btn-accent {
+            background: linear-gradient(45deg, var(--accent), #ff7675);
+            color: white;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(253, 121, 168, 0.3);
+        }
+        
+        .btn-accent:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(253, 121, 168, 0.4);
+        }
+        
+        .btn-info {
+            background: linear-gradient(45deg, var(--info), #74b9ff);
+            color: white;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(9, 132, 227, 0.3);
+        }
+        
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(9, 132, 227, 0.4);
+        }
+        
+        .input-field {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(253, 121, 168, 0.2);
+        }
+        
+        .wallet-address {
+            background: rgba(108, 92, 231, 0.2);
+            border: 1px solid rgba(108, 92, 231, 0.4);
+            color: #a29bfe;
+        }
+        
+        .coin-spin {
+            animation: spin 8s linear infinite;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(90deg, #12c2e9, #c471ed, #f64f59);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .glow {
+            box-shadow: 0 0 15px rgba(253, 121, 168, 0.5);
+        }
+        
+        .reward-item {
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .reward-item:hover {
+            background: rgba(253, 121, 168, 0.1);
+            border-left: 3px solid var(--accent);
+        }
+        
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #12c2e9, #c471ed);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .token-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            margin-right: 10px;
+        }
+        
+        .token-icon i {
+            font-size: 20px;
+        }
+        
+        .level-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: linear-gradient(45deg, #f64f59, #c471ed);
+        }
+        
+        .tab-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            transition: all 0.3s ease;
+        }
+        
+        .reward-tab.active {
+            color: white;
+            font-weight: bold;
+            position: relative;
+        }
+        
+        .reward-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: currentColor;
+        }
+        
+        .reward-panel {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .reward-panel.active {
+            display: block;
+        }
+        
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        .system-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        
+        .info-item {
+            text-align: center;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+        }
+        
+        .info-item .label {
+            font-size: 0.875rem;
+            color: #a0aec0;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-item .value {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto max-w-md main-content relative overflow-hidden">
+        <!-- 粒子背景 -->
+        <div id="particles-js"></div>
+        
+        <!-- 顶部导航 -->
+        <header class="py-4 px-4 sticky top-0 z-10 bg-gradient-to-r from-indigo-900/80 to-purple-900/80 backdrop-blur-md">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <img src="./872d9f10afc9c465cd1f360b81d6e0d.jpg" alt="Logo" class="w-8 h-8 mr-2 coin-spin">
+                    <h1 class="text-xl font-bold logo-text">NRF</h1>
+                </div>
+                <div id="walletInfo" class="flex items-center cursor-pointer hover:opacity-80 transition-opacity">
+                    <span id="walletAddress" class="text-sm wallet-address px-3 py-1 rounded-full mr-2 truncate bg-opacity-20 bg-purple-500" style="max-width: 150px;">未连接钱包</span>
+                    <button id="copyAddressBtn" class="text-purple-300 hover:text-white hidden">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容区域 -->
+        <div class="px-4">
+            <!-- 质押算力页面 -->
+            <div id="stakingTab" class="tab-content active">
+                <div class="my-4">
+                    <!-- 欢迎卡片 -->
+                    <div class="card p-6 mb-6 relative overflow-hidden"> <!-- 增加内边距和底部间距 -->
+                        <div class="absolute -top-10 -right-10 w-24 h-24 bg-purple-500 rounded-full filter blur-2xl opacity-20"></div>
+                        <div class="absolute -bottom-10 -left-10 w-24 h-24 bg-pink-500 rounded-full filter blur-2xl opacity-20"></div>
+                        <div class="relative z-10">
+                            <h2 class="text-xl font-semibold mb-2 gradient-text">欢迎来到NRF生态奖励体系</h2>
+                            <p class="text-base text-gray-300 mb-4">算力挖矿，获取高额收益，开启您的加密之旅</p>
+                            <div class="flex items-center">
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 系统信息卡片 -->
+        
+
+                    <!-- 我的质押卡片 -->
+                    <div class="card p-6 mb-6"> <!-- 增加内边距和底部间距 -->
+                        <h2 class="text-xl font-semibold mb-4 flex items-center"> <!-- 增加标题大小和底部间距 -->
+                            <i class="fas fa-wallet text-blue-400 mr-3 text-2xl"></i>
+                            <span>我的算力</span>
+                        </h2>
+                        <div class="grid grid-cols-2 gap-6 mb-6"> <!-- 增加网格间距和底部间距 -->
+                            <div class="bg-gradient-to-br from-blue-900/50 to-cyan-900/50 p-5 rounded-xl"> <!-- 增加内边距 -->
+                                <p class="text-sm text-gray-300 mb-2">算力金额</p> <!-- 增加底部间距 -->
+                                <p id="stakedAmount" class="font-medium text-xl mb-3">0 USDT</p> <!-- 增加字体大小和底部间距 -->
+                                <div class="progress-bar mt-2">
+                                    <div class="progress-fill" style="width: 30%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-br from-green-900/50 to-teal-900/50 p-5 rounded-xl"> <!-- 增加内边距 -->
+                                <p class="text-sm text-gray-300 mb-2">总算力</p> <!-- 增加底部间距 -->
+                                <p id="hashRate" class="font-medium text-xl">0 MH</p> <!-- 增加字体大小 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 质押操作卡片 -->
+                    <div class="card p-6 mb-6"> <!-- 增加内边距和底部间距 -->
+                        <h2 class="text-xl font-semibold mb-4 flex items-center"> <!-- 增加标题大小和底部间距 -->
+                            <i class="fas fa-rocket text-pink-400 mr-3 text-2xl"></i>
+                            <span>算力操作</span>
+                        </h2>
+                        <div class="mb-6"> <!-- 增加底部间距 -->
+                            <label class="block text-base font-medium text-gray-300 mb-2">算力金额 (USDT)</label> <!-- 增加字体大小和底部间距 -->
+                            <div class="relative">
+                                <input id="stakeAmount" type="number" class="w-full input-field px-5 py-4 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="输入算力金额"> <!-- 增加内边距和字体大小 -->
+                                <div class="absolute right-4 top-4 text-gray-400 text-base">USDT</div> <!-- 调整位置和字体大小 -->
+                            </div>
+                            <p class="text-sm text-gray-400 mt-2">最小算力200 USDT</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4"> <!-- 增加按钮间距 -->
+                            <button id="approveUSDTBtn" class="btn-primary py-4 px-6 rounded-xl font-medium text-lg"> <!-- 增加内边距和字体大小 -->
+                                <i class="fas fa-lock mr-2"></i>授权USDT
+                            </button>
+                            <button id="stakeBtn" class="btn-success py-4 px-6 rounded-xl font-medium text-lg"> <!-- 增加内边距和字体大小 -->
+                                <i class="fas fa-coins mr-2"></i>立即挖矿
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 我的页面 -->
+            <div id="myTab" class="tab-content">
+                <div class="my-4">
+                    <!-- 用户概览卡片 -->
+                    <div class="card p-4 mb-4">
+                        <div class="system-info">
+                            <div class="info-item">
+                                <div class="label">代币价格</div>
+                                <div class="value" id="tokenPrice">0 USDT</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">总销毁量</div>
+                                <div class="value" id="totalBurned">0</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">总算力</div>
+                                <div class="value" id="totalStaked">0 MH</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 我的奖励卡片 -->
+                    <div class="card p-4 mb-4">
+                        <h2 class="text-lg font-semibold mb-3 flex items-center">
+                            <i class="fas fa-gem text-purple-400 mr-2"></i>
+                            <span>我的奖励</span>
+                        </h2>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 p-3 rounded-xl">
+                                <p class="text-xs text-gray-300">待领取代币</p>
+                                <p id="pendingRewards" class="font-medium text-xl floating">0</p>
+                                <p class="text-xs text-green-400 mt-1">≈ $0.00</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-blue-900/50 to-cyan-900/50 p-3 rounded-xl">
+                                <p class="text-xs text-gray-300">待领取USDT</p>
+                                <p id="pendingUSDT" class="font-medium text-xl">0</p>
+                                
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="claimTokensBtn" class="btn-primary py-3 px-4 rounded-xl font-medium">
+                                <i class="fas fa-coins mr-2"></i>领取代币
+                            </button>
+                            <button id="claimUSDTBtn" class="btn-success py-3 px-4 rounded-xl font-medium">
+                                <i class="fas fa-dollar-sign mr-2"></i>领取USDT
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 团队信息卡片 -->
+                    <div class="card p-4 mb-4">
+                        <h2 class="text-lg font-semibold mb-3 flex items-center">
+                            <i class="fas fa-users text-blue-400 mr-2"></i>
+                            <span>团队信息</span>
+                        </h2>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="bg-gradient-to-br from-green-900/50 to-teal-900/50 p-3 rounded-xl">
+                                <p class="text-xs text-gray-300">团队人数</p>
+                                <p id="teamMemberCount" class="font-medium text-xl">0</p>
+                                <p class="text-xs text-green-400 mt-1">+0 本周</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-yellow-900/50 to-amber-900/50 p-3 rounded-xl">
+                                <p class="text-xs text-gray-300">团队算力</p>
+                                <p id="teamHashRate" class="font-medium text-xl">0 MH</p>
+                                <p class="text-xs text-green-400 mt-1">+0 本周</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gradient-to-br from-pink-900/50 to-red-900/50 p-3 rounded-xl">
+                                <p class="text-xs text-gray-300">我的等级</p>
+                                <p id="userLevel" class="font-medium text-xl">V0</p>
+                                <p class="text-xs text-yellow-400 mt-1">升级需 0</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-purple-900/50 to-fuchsia-900/50 p-3 rounded-xl">
+                                <p class="text-xs text-gray-300">直推USDT</p>
+                                <p id="referralUSDT" class="font-medium text-xl">0</p>
+                                <p class="text-xs text-green-400 mt-1">+0 今日</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 奖励记录卡片 -->
+                    <div class="card mb-6 overflow-hidden">
+                        <div class="relative">
+                            <div class="flex border-b border-gray-700">
+                                <div class="reward-tab text-center py-3 px-4 cursor-pointer hover:text-purple-400 flex-1" data-tab="directReward">
+                                    直推奖励
+                                </div>
+                                <div class="reward-tab text-center py-3 px-4 cursor-pointer hover:text-blue-400 flex-1" data-tab="stakingReward">
+                                    团队奖励
+                                </div>
+                                <div class="reward-tab text-center py-3 px-4 cursor-pointer hover:text-green-400 flex-1" data-tab="teamReward">
+                                    质押奖励
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="directReward" class="reward-panel active p-4">
+                            <div class="bg-purple-900/20 rounded-lg p-3 mb-4 flex items-center">
+                                <i class="fas fa-info-circle text-purple-400 mr-2"></i>
+                                <p class="text-sm text-purple-300">
+                                    直推奖励记录 - 每推荐1人可获得10%USDT和10%算力
+                                </p>
+                            </div>
+                            <div id="directRewardList" class="divide-y divide-gray-700">
+                                <!-- 动态加载的直推奖励记录将在这里显示 -->
+                            </div>
+                        </div>
+                        
+                        <div id="stakingReward" class="reward-panel p-4">
+                            <div class="bg-blue-900/20 rounded-lg p-3 mb-4 flex items-center">
+                                <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+                                <p class="text-sm text-blue-300">
+                                    质押奖励记录 - 每日自动发放算力收益
+                                </p>
+                            </div>
+                            <div id="stakingRewardList" class="divide-y divide-gray-700">
+                                <!-- 动态加载的质押奖励记录将在这里显示 -->
+                            </div>
+                        </div>
+                        
+                        <div id="teamReward" class="reward-panel p-4">
+                            <div class="bg-green-900/20 rounded-lg p-3 mb-4 flex items-center">
+                                <i class="fas fa-info-circle text-green-400 mr-2"></i>
+                                <p class="text-sm text-green-300">
+                                    团队奖励记录 - 根据团队业绩获得相应比例奖励
+                                </p>
+                            </div>
+                            <div id="teamRewardList" class="divide-y divide-gray-700">
+                                <!-- 动态加载的团队奖励记录将在这里显示 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 游戏页面 -->
+            <div id="gameTab" class="tab-content">
+                <div class="my-4">
+                    <!-- 游戏主卡片 -->
+                    <div class="card p-6 text-center">
+                        <!-- 修改Logo为静态 -->
+                        <div class="w-24 h-24 mx-auto mb-8 relative">
+                            <img src="./872d9f10afc9c465cd1f360b81d6e0d.jpg" alt="Logo" class="w-full h-full rounded-full">
+                            <div class="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full"></div>
+                        </div>
+                        
+                        <!-- 修改游戏手柄图标为新图片，移除渐变背景 -->
+                        <div class="inline-block mb-6">
+                            <img src="./3687adf5efeff8b9680f0d3b9497d65.jpg" alt="Game Icon" class="w-36 h-36 rounded-full coin-spin">
+                        </div>
+                        <h2 class="text-xl font-bold mb-2 gradient-text">游戏功能</h2>
+                        <p class="text-sm text-gray-300 mb-6">暂未开放，敬请期待</p>
+                        
+                        <div class="bg-gray-800/50 p-4 rounded-xl">
+                            <p class="text-gray-400">
+                                <i class="fas fa-clock text-yellow-400 mr-2"></i>
+                                游戏功能正在开发中，即将上线
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 机制页面 -->
+            <div id="mechanismTab" class="tab-content">
+                <div class="my-4">
+                    <!-- Logo容器 -->
+                    <div class="flex justify-center mb-8">
+                        <div class="w-48 h-48 relative">
+                            <img src="./872d9f10afc9c465cd1f360b81d6e0d.jpg" alt="Logo" class="w-full h-full coin-spin rounded-full">
+                            <div class="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full"></div>
+                        </div>
+                    </div>
+
+                    <!-- 投资机制说明卡片 -->
+                    <div class="card p-6">
+                        <h2 class="text-xl font-semibold mb-4 flex items-center">
+                            <i class="fas fa-chart-line text-yellow-400 mr-3 text-2xl"></i>
+                            <span>投入机制说明</span>
+                        </h2>
+                        <div class="space-y-4">
+                            <div class="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 p-4 rounded-xl">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-lg">每日释放比例</span>
+                                    <span class="text-lg text-green-400 font-semibold">1%</span>
+                                </div>
+                                <div class="text-base text-gray-400">最低投入额度：200 USDT</div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-3">
+                                <div class="bg-gradient-to-r from-purple-900/30 to-pink-900/30 p-5 rounded-xl">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-lg">200-499 USDT</span>
+                                        <span class="text-lg text-yellow-400 font-semibold">1.5倍算力</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-gradient-to-r from-pink-900/30 to-red-900/30 p-5 rounded-xl">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-lg">500-999 USDT</span>
+                                        <span class="text-lg text-yellow-400 font-semibold">2倍算力</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-gradient-to-r from-orange-900/30 to-amber-900/30 p-5 rounded-xl">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-lg">1000-1999 USDT</span>
+                                        <span class="text-lg text-yellow-400 font-semibold">2.5倍算力</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-gradient-to-r from-green-900/30 to-emerald-900/30 p-5 rounded-xl">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-lg">2000+ USDT</span>
+                                        <span class="text-lg text-yellow-400 font-semibold">3倍算力</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gradient-to-r from-gray-900/30 to-slate-900/30 p-4 rounded-xl">
+                                <p class="text-base text-gray-300">
+                                    <i class="fas fa-lightbulb text-yellow-400 mr-2 text-lg"></i>
+                                每日稳定释放1%，让您的收益最大化！
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 邀请页面 -->
+            <div id="inviteTab" class="tab-content">
+                <div class="my-4">
+                    <!-- 推荐设置卡片 -->
+                    <div class="card p-4 mb-4">
+                        <h2 class="text-lg font-semibold mb-3 flex items-center">
+                            <i class="fas fa-users text-yellow-400 mr-2"></i>
+                            <span>推荐设置</span>
+                        </h2>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-300 mb-1">推荐人地址</label>
+                            <input id="referrerAddress" type="text" class="w-full input-field px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500" placeholder="输入推荐人钱包地址">
+                        </div>
+                        <button id="setReferrerBtn" class="btn-accent w-full py-3 px-4 rounded-xl font-medium mb-3">
+                            <i class="fas fa-user-plus mr-2"></i>设置推荐人
+                        </button>
+                        <button id="getInviteLinkBtn" class="btn-info w-full py-3 px-4 rounded-xl font-medium">
+                            <i class="fas fa-link mr-2"></i>获取邀请链接
+                        </button>
+                        
+                        <!-- 邀请奖励说明 -->
+                        <div class="mt-4 bg-gradient-to-r from-purple-900/30 to-pink-900/30 p-4 rounded-xl">
+                            <h3 class="text-lg font-semibold mb-2 text-purple-300">
+                                <i class="fas fa-gift mr-2"></i>邀请奖励
+                            </h3>
+                            <ul class="space-y-2 text-gray-300">
+                                <li class="flex items-center">
+                                    <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                                    直推奖励：10% USDT + 10% 算力
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                                    团队奖励：团队业绩增长提成
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 邀请记录卡片 -->
+                    
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部导航 -->
+        <div class="bottom-nav">
+            <div class="flex justify-around items-center py-3 px-4">
+                <div class="tab-item text-center" data-tab="stakingTab">
+                    <i class="fas fa-coins text-xl mb-1"></i>
+                    <p class="text-xs">算力</p>
+                </div>
+                <div class="tab-item text-center" data-tab="mechanismTab">
+                    <i class="fas fa-chart-line text-xl mb-1"></i>
+                    <p class="text-xs">机制</p>
+                </div>
+                <div class="tab-item text-center" data-tab="inviteTab">
+                    <i class="fas fa-user-plus text-xl mb-1"></i>
+                    <p class="text-xs">邀请</p>
+                </div>
+                <div class="tab-item text-center" data-tab="gameTab">
+                    <i class="fas fa-gamepad text-xl mb-1"></i>
+                    <p class="text-xs">游戏</p>
+                </div>
+                <div class="tab-item text-center" data-tab="myTab">
+                    <i class="fas fa-user-astronaut text-xl mb-1"></i>
+                    <p class="text-xs">我的</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 连接钱包模态框 -->
+    <div id="connectWalletModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-xl w-full max-w-sm mx-4 overflow-hidden">
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-center">连接钱包</h3>
+                <button id="closeWalletModal" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <button id="connectMetamaskBtn" class="w-full flex items-center justify-between p-3 mb-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition">
+                    <div class="flex items-center">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" class="w-8 h-8 mr-3">
+                        <span>MetaMask</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button id="connectWalletConnectBtn" class="w-full flex items-center justify-between p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition">
+                    <div class="flex items-center">
+                        <img src="https://walletconnect.com/walletconnect-logo.png" alt="WalletConnect" class="w-8 h-8 mr-3">
+                        <span>WalletConnect</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 邀请链接模态框 -->
+    <div id="inviteModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-xl w-full max-w-sm mx-4 overflow-hidden">
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="text-lg font-semibold">我的邀请链接</h3>
+                <button id="closeInviteModal" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">邀请链接</label>
+                    <div class="relative">
+                        <input id="inviteLink" type="text" class="w-full input-field px-4 py-3 rounded-xl pr-12" readonly>
+                        <button id="copyInviteLink" class="absolute right-3 top-3 text-purple-400 hover:text-purple-300">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            
+                <div class="bg-gray-700/50 p-3 rounded-lg">
+                    <p class="text-sm text-gray-300">
+                        <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+                        邀请好友可获得10%的USDT和10%算力。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 底部导航栏切换功能
+    const tabItems = document.querySelectorAll('.tab-item');
+    
+    tabItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            
+            // 移除所有标签页的active类
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 添加当前标签页的active类
+            document.getElementById(tabId).classList.add('active');
+            
+            // 更新底部导航栏的active状态
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.remove('active-tab');
+                tab.querySelector('i').classList.remove('text-purple-400');
+                tab.querySelector('p').classList.remove('text-purple-400');
+            });
+            
+            // 添加当前项的active状态
+            this.classList.add('active-tab');
+            this.querySelector('i').classList.add('text-purple-400');
+            this.querySelector('p').classList.add('text-purple-400');
+        });
+    });
+    
+    // 默认激活第一个标签页
+    document.querySelector('.tab-item').click();
+    
+    // 奖励标签切换功能
+    const rewardTabs = document.querySelectorAll('.reward-tab');
+    
+    rewardTabs.forEach((tab) => {
+        tab.addEventListener('click', function() {
+            // 移除所有标签的active类
+            rewardTabs.forEach(t => {
+                t.classList.remove('active');
+                t.classList.remove('text-purple-400', 'text-blue-400', 'text-green-400');
+            });
+            
+            // 给当前标签添加active类
+            this.classList.add('active');
+            const tabType = this.getAttribute('data-tab');
+            if (tabType === 'directReward') {
+                this.classList.add('text-purple-400');
+            } else if (tabType === 'stakingReward') {
+                this.classList.add('text-blue-400');
+            } else if (tabType === 'teamReward') {
+                this.classList.add('text-green-400');
+            }
+            
+            // 显示对应的面板
+            document.querySelectorAll('.reward-panel').forEach(panel => {
+                panel.classList.remove('active');
+                panel.style.display = 'none';
+            });
+            const targetPanel = document.getElementById(tabType);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+                targetPanel.style.display = 'block';
+            }
+        });
+    });
+
+    // 默认激活第一个奖励标签
+    if (rewardTabs.length > 0) {
+        rewardTabs[0].click();
+    }
+    
+    // 钱包连接功能
+    const walletInfo = document.getElementById('walletInfo');
+    const connectWalletModal = document.getElementById('connectWalletModal');
+    
+    walletInfo.addEventListener('click', function() {
+        connectWalletModal.classList.remove('hidden');
+    });
+    
+    document.getElementById('connectMetamaskBtn').addEventListener('click', function() {
+        // 这里添加连接MetaMask的逻辑
+        connectWallet();
+    });
+    
+    document.getElementById('connectWalletConnectBtn').addEventListener('click', function() {
+        // 这里添加连接WalletConnect的逻辑
+        alert('WalletConnect功能暂未实现');
+    });
+    
+    // 关闭模态框
+    document.querySelectorAll('[id^="close"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.fixed').classList.add('hidden');
+        });
+    });
+    
+    // 邀请链接功能
+    document.getElementById('getInviteLinkBtn').addEventListener('click', function() {
+        document.getElementById('inviteModal').classList.remove('hidden');
+    });
+    
+    document.getElementById('copyInviteLink').addEventListener('click', function() {
+        const inviteLink = document.getElementById('inviteLink');
+        inviteLink.select();
+        document.execCommand('copy');
+        alert('邀请链接已复制到剪贴板');
+    });
+    
+    // 模拟连接钱包
+   async function connectWallet() {
+    try {
+        // 检测哪个钱包提供者可用
+        let provider;
+        let walletName = '';
+        
+        // 检查是否安装了 MetaMask
+        if (window.ethereum?.isMetaMask) {
+            provider = window.ethereum;
+            walletName = 'MetaMask';
+            
+            // 尝试同时检测其他钱包
+            try {
+                // 检查是否安装了 TokenPocket
+                if (window.ethereum?.isTokenPocket) {
+                    walletName = 'TokenPocket';
+                }
+                // 检查是否安装了 OKX Wallet
+                else if (window.okxwallet) {
+                    provider = window.okxwallet;
+                    walletName = 'OKX Wallet';
+                }
+            } catch (e) {
+                console.log('Additional wallet detection error:', e);
+            }
+        }
+        // 检查是否只有 TokenPocket 可用
+        else if (window.tokenpocket) {
+            provider = window.tokenpocket;
+            walletName = 'TokenPocket';
+        }
+        // 检查是否只有 OKX Wallet 可用
+        else if (window.okxwallet) {
+            provider = window.okxwallet;
+            walletName = 'OKX Wallet';
+        } else {
+            throw new Error('未检测到任何钱包扩展程序。请安装 MetaMask、TokenPocket 或 OKX Wallet。');
+        }
+
+        // 请求账户访问权限
+        const accounts = await provider.request({ method: 'eth_requestAccounts' });
+        
+        if (accounts.length === 0) {
+            throw new Error('用户拒绝了访问请求。');
+        }
+        
+        const address = accounts[0];
+        const shortAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+        
+        // 更新UI显示
+        const walletAddressElement = document.getElementById('walletAddress');
+        if (walletAddressElement) {
+            walletAddressElement.textContent = shortAddress;
+            walletAddressElement.classList.add('text-green-400'); // 添加绿色显示
+        }
+        
+        // 更新钱包UI
+        updateWalletUI(address);
+
+        // 隐藏连接钱包模态框
+        const connectWalletModal = document.getElementById('connectWalletModal');
+        if (connectWalletModal) {
+            connectWalletModal.classList.add('hidden');
+        }
+        
+        // 更新全局账户变量
+        window.userAccount = address;
+        
+        // 初始化Web3和合约
+        window.web3 = new Web3(provider);
+        initializeContracts();
+        
+        // 加载用户数据
+        loadUserInfo();
+        
+        console.log(`成功连接 ${walletName} 钱包:`, address);
+        
+        return {
+            provider,
+            address,
+            walletName
+        };
+        
+    } catch (error) {
+        console.error('连接钱包失败:', error);
+        
+        // 显示错误信息给用户
+        alert(`连接钱包失败: ${error.message}`);
+        
+        // 可以根据不同的错误类型进行不同的处理
+        if (error.code === 4001) {
+            // 用户拒绝了请求
+            console.log('用户拒绝了连接请求');
+        } else if (error.code === -32002) {
+            // 请求已在进行中
+            console.log('请打开钱包扩展程序并完成待处理的请求');
+        }
+        
+        throw error;
+    }
+}
+
+    // 初始化合约
+    function initializeContracts() {
+        try {
+            // 初始化主合约
+            contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+            
+            // 初始化USDT合约
+            usdtContract = new web3.eth.Contract(USDT_ABI, USDT_ADDRESS);
+            
+            // 初始化奖励代币合约
+            rewardTokenContract = new web3.eth.Contract(REWARD_TOKEN_ABI, REWARD_TOKEN_ADDRESS);
+            
+            // 初始化PancakeRouter合约
+            pancakeRouterContract = new web3.eth.Contract(ROUTER_ABI, ROUTER_ADDRESS);
+            
+            console.log('合约初始化成功');
+        } catch (error) {
+            console.error('初始化合约失败:', error);
+            throw error;
+        }
+    }
+
+    // 监听钱包账户变化
+    if (window.ethereum) {
+        window.ethereum.on('accountsChanged', function (accounts) {
+            if (accounts.length > 0) {
+                const shortAddress = `${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`;
+                const walletAddressElement = document.getElementById('walletAddress');
+                if (walletAddressElement) {
+                    walletAddressElement.textContent = shortAddress;
+                    walletAddressElement.classList.add('text-green-400');
+                }
+                window.userAccount = accounts[0];
+                loadUserInfo();
+            } else {
+                // 用户断开了钱包连接
+                const walletAddressElement = document.getElementById('walletAddress');
+                if (walletAddressElement) {
+                    walletAddressElement.textContent = '未连接钱包';
+                    walletAddressElement.classList.remove('text-green-400');
+                }
+                window.userAccount = null;
+            }
+        });
+    }
+
+    // 页面加载时检查钱包状态
+    window.addEventListener('load', async () => {
+        if (window.ethereum) {
+            try {
+                // 获取当前连接的账户
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    const shortAddress = `${accounts[0].substring(0, 6)}...${accounts[0].substring(accounts[0].length - 4)}`;
+                    const walletAddressElement = document.getElementById('walletAddress');
+                    if (walletAddressElement) {
+                        walletAddressElement.textContent = shortAddress;
+                        walletAddressElement.classList.add('text-green-400');
+                    }
+                    window.userAccount = accounts[0];
+                    
+                    // 初始化Web3和合约
+                    window.web3 = new Web3(window.ethereum);
+                    initializeContracts();
+                    
+                    // 加载用户数据
+                    loadUserInfo();
+                }
+            } catch (error) {
+                console.error('检查钱包状态失败:', error);
+            }
+        }
+    });
+
+    // 添加关闭钱包模态框的事件监听
+    document.getElementById('closeWalletModal').addEventListener('click', function() {
+        document.getElementById('connectWalletModal').classList.add('hidden');
+    });
+
+    document.getElementById('walletInfo').addEventListener('click', function() {
+        if (!window.userAccount) {
+            const connectWalletModal = document.getElementById('connectWalletModal');
+            if (connectWalletModal) {
+                connectWalletModal.classList.remove('hidden');
+            }
+        }
+    });
+
+    document.getElementById('copyAddressBtn').addEventListener('click', function(e) {
+        e.stopPropagation(); // 阻止事件冒泡
+        if (window.userAccount) {
+            navigator.clipboard.writeText(window.userAccount)
+                .then(() => {
+                    alert('地址已复制到剪贴板');
+                })
+                .catch(err => {
+                    console.error('复制失败:', err);
+                    alert('复制失败，请手动复制');
+                });
+        }
+    });
+
+    // 在钱包连接成功后显示复制按钮
+    function updateWalletUI(address) {
+        const copyBtn = document.getElementById('copyAddressBtn');
+        if (copyBtn) {
+            copyBtn.classList.remove('hidden');
+        }
+    }
+});
+</script>
+    
+    <!-- 引入之前提供的完整JavaScript代码 -->
+<script >
+    let web3;
+let contract;
+let usdtContract;
+let rewardTokenContract;
+let pancakeRouterContract;
+let accounts;
+let isInitialized = false;
+const CONTRACT_ADDRESS = '0x0cd738f93677673328Fd8cee7c74d9Be5dF60ca0';
+const USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955';
+const REWARD_TOKEN_ADDRESS = '0xbe7d27a7044379437cda1384e55f49e71deb410d';
+const ROUTER_ADDRESS = '0x10ED43C718714eb63d5aA57B78B54704E256024E';
+
+const contractABI = [
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_usdt",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_rewardToken",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_router",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_feeWallet",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "buyAndBurnPercent",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "feePercent",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "referralPercent",
+                "type": "uint256"
+            }
+        ],
+        "name": "AllocationPercentsUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "oldWallet",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newWallet",
+                "type": "address"
+            }
+        ],
+        "name": "FeeWalletUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "multiplier",
+                "type": "uint256"
+            }
+        ],
+        "name": "Invested",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "thresholds",
+                "type": "uint256[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "values",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "MultiplierParamsUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "previousOwner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "referrer",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "usdtReward",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "hashRateReward",
+                "type": "uint256"
+            }
+        ],
+        "name": "ReferralReward",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "referrer",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "usdtReward",
+                "type": "uint256"
+            }
+        ],
+        "name": "ReferralRewardPaid",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "referrer",
+                "type": "address"
+            }
+        ],
+        "name": "ReferrerSet",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "tokenAmount",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "usdtAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "RewardClaimed",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "Staked",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "receiver",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "usdtReward",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "hashRateReward",
+                "type": "uint256"
+            }
+        ],
+        "name": "TeamReward",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "thresholds",
+                "type": "uint256[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "rewardPercents",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "TeamRewardParamsUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "newPrice",
+                "type": "uint256"
+            }
+        ],
+        "name": "TokenPriceUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "TokensWithdrawn",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "exitAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "UserExit",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "newFee",
+                "type": "uint256"
+            }
+        ],
+        "name": "WithdrawFeeUpdated",
+        "type": "event"
+    },
+    {
+        "inputs": [],
+        "name": "buyAndBurnPercent",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "claimTokenRewards",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "claimUSDTRewards",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "dailyReleaseRate",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "deadAddress",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "emergencyWithdraw",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "feePercent",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "feeWallet",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getContractRewardTokenBalance",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getContractUSDTBalance",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "getMultiplier",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getMultiplierParams",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "thresholds",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "values",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "start",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "count",
+                "type": "uint256"
+            }
+        ],
+        "name": "getRankingData",
+        "outputs": [
+            {
+                "internalType": "address[]",
+                "name": "addresses",
+                "type": "address[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "hashRates",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "teamHashRates",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "getReferralInfo",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "referrer",
+                "type": "address"
+            },
+            {
+                "internalType": "bool",
+                "name": "isValid",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getSystemInfo",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "currentTokenPrice",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalBurned",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalTeamStaked",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "getTeamDetails",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "directCount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalCount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "directVolume",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "teamVolume",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "directHashRate",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "teamHashRate",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "getTeamMemberCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "getTotalHashRate",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getTotalPendingUSDT",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "getUplineInfo",
+        "outputs": [
+            {
+                "internalType": "address[]",
+                "name": "uplines",
+                "type": "address[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "levels",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "teamVolumes",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "getUserInfo",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "stakedAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "hashRate",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "teamHashRate",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "pendingTokenRewards",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "pendingUSDTRewards",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "releasedPercent",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "getUserRanking",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "rank",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalUsers",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "getUserRewardRecordCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "startIndex",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "count",
+                "type": "uint256"
+            }
+        ],
+        "name": "getUserRewardRecords",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "timestamps",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "address[]",
+                "name": "fromAddresses",
+                "type": "address[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "amounts",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "usdtRewards",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "hashRateRewards",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint8[]",
+                "name": "rewardTypes",
+                "type": "uint8[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "invest",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "investmentMultiple",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "minInvestment",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "multiplierThresholds",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "multiplierValues",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "operators",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "pancakeRouter",
+        "outputs": [
+            {
+                "internalType": "contract IPancakeRouter",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "priceDecimals",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "referralPercent",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address[]",
+                "name": "users_",
+                "type": "address[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "amounts",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "rewardHashRate",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "rewardToken",
+        "outputs": [
+            {
+                "internalType": "contract IERC20",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_buyAndBurnPercent",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_feePercent",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_referralPercent",
+                "type": "uint256"
+            }
+        ],
+        "name": "setAllocationPercents",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_dailyReleaseRate",
+                "type": "uint256"
+            }
+        ],
+        "name": "setDailyReleaseRate",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_deadAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setDeadAddress",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_newFeeWallet",
+                "type": "address"
+            }
+        ],
+        "name": "setFeeWallet",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_investmentMultiple",
+                "type": "uint256"
+            }
+        ],
+        "name": "setInvestmentMultiple",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_minInvestment",
+                "type": "uint256"
+            }
+        ],
+        "name": "setMinInvestment",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "_thresholds",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "_values",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "setMultiplierParams",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "operator",
+                "type": "address"
+            },
+            {
+                "internalType": "bool",
+                "name": "status",
+                "type": "bool"
+            }
+        ],
+        "name": "setOperator",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_decimals",
+                "type": "uint256"
+            }
+        ],
+        "name": "setPriceDecimals",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "referrer",
+                "type": "address"
+            }
+        ],
+        "name": "setReferrer",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "_percents",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "setTeamRewardPercents",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "_thresholds",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "setTeamThresholds",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "newPrice",
+                "type": "uint256"
+            }
+        ],
+        "name": "setTokenPrice",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "newFee",
+                "type": "uint256"
+            }
+        ],
+        "name": "setWithdrawFee",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "stake",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "stakedUsers",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "teamMembers",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "teamRewardPercents",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "teamThresholds",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "tokenPrice",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "totalStaked",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "triggerStakingRewards",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_buyAndBurnPercent",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_feePercent",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_referralPercent",
+                "type": "uint256"
+            }
+        ],
+        "name": "updateAllocationPercents",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_minInvestment",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_investmentMultiple",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_dailyReleaseRate",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_withdrawFee",
+                "type": "uint256"
+            }
+        ],
+        "name": "updateSystemParams",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "usdtToken",
+        "outputs": [
+            {
+                "internalType": "contract IERC20",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "userAddresses",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "userRewardRecords",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "usdtReward",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "hashRateReward",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint8",
+                "name": "rewardType",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "users",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "stakedAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "hashRate",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "claimedRewards",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalRewards",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "lastUpdateTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "referrer",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "teamVolume",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "level",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "pendingUSDT",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalUSDT",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "isActive",
+                "type": "bool"
+            },
+            {
+                "internalType": "uint256",
+                "name": "exitAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "investmentTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "lastAutoReleaseTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "multiplier",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "releasedPercent",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "withdrawFee",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "withdrawRewardToken",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "withdrawUSDT",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+];
+
+const usdtABI = [{
+    "inputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+}, {
+    "anonymous": false,
+    "inputs": [{
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+    }, {
+        "indexed": true,
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+    }, {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+    }],
+    "name": "Approval",
+    "type": "event"
+}, {
+    "anonymous": false,
+    "inputs": [{
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+    }, {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+    }],
+    "name": "OwnershipTransferred",
+    "type": "event"
+}, {
+    "anonymous": false,
+    "inputs": [{
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+    }, {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+    }, {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+    }],
+    "name": "Transfer",
+    "type": "event"
+}, {
+    "constant": true,
+    "inputs": [],
+    "name": "_decimals",
+    "outputs": [{
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+    }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [],
+    "name": "_name",
+    "outputs": [{
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+    }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [],
+    "name": "_symbol",
+    "outputs": [{
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+    }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [{
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+    }, {
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+    }],
+    "name": "allowance",
+    "outputs": [{
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+    }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+    }, {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+    }],
+    "name": "approve",
+    "outputs": [{
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+    }],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [{
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+    }],
+    "name": "balanceOf",
+    "outputs": [{
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+    }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+    }],
+    "name": "burn",
+    "outputs": [{
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+    }],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [{
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+    }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+    }, {
+        "internalType": "uint256",
+        "name": "subtractedValue",
+        "type": "uint256"
+    }],
+    "name": "decreaseAllowance",
+    "outputs": [{
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+    }],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [],
+    "name": "getOwner",
+    "outputs": [{
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+    }, {
+        "internalType": "uint256",
+        "name": "addedValue",
+        "type": "uint256"
+    }],
+    "name": "increaseAllowance",
+    "outputs": [{
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+    }],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+    }],
+    "name": "mint",
+    "outputs": [{
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+    }],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [],
+    "name": "name",
+    "outputs": [{
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+    }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [],
+    "name": "owner",
+    "outputs": [{
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+    }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [],
+    "name": "symbol",
+    "outputs": [{
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+    }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [{
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+    }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+    }, {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+    }],
+    "name": "transfer",
+    "outputs": [{
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+    }],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+    }, {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+    }, {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+    }],
+    "name": "transferFrom",
+    "outputs": [{
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+    }],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+    }],
+    "name": "transferOwnership",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+}];
+
+const rewardTokenABI = [
+    {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "spender",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "Approval",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "previousOwner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "Transfer",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "spender",
+                "type": "address"
+            }
+        ],
+        "name": "allowance",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "spender",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "approve",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "balanceOf",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "decimals",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "name",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "symbol",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "totalSupply",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "transfer",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "sender",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "transferFrom",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+];
+
+const pancakeRouterABI = [
+    {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "spender",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "Approval",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "previousOwner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "Transfer",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "spender",
+                "type": "address"
+            }
+        ],
+        "name": "allowance",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "spender",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "approve",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "balanceOf",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "decimals",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "name",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "symbol",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "totalSupply",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "transfer",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "sender",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "transferFrom",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+];
+
+const CONTRACT_ABI = contractABI;
+const USDT_ABI = usdtABI;
+const REWARD_TOKEN_ABI = rewardTokenABI;
+const ROUTER_ABI = pancakeRouterABI;
+
+// 初始化函数
+async function init() {
+    try {
+        console.log('正在初始化应用...');
+        
+        // 确保DOM完全加载
+        if (document.readyState !== 'complete') {
+            console.log('DOM尚未完全加载，等待加载完成...');
+            return new Promise(resolve => {
+                window.addEventListener('load', () => {
+                    console.log('DOM已完全加载，继续初始化...');
+                    setTimeout(() => resolve(init()), 100);
+                });
+            });
+        }
+        
+        // 初始化Web3
+        if (window.ethereum) {
+            web3 = new Web3(window.ethereum);
+            try {
+                accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                ethereum.on('accountsChanged', function (newAccounts) {
+                    accounts = newAccounts;
+                    updateUI();
+                });
+            } catch (error) {
+                console.error("用户拒绝了钱包连接请求", error);
+            }
+        } else if (window.web3) {
+            web3 = new Web3(window.web3.currentProvider);
+            accounts = await web3.eth.getAccounts();
+        } else {
+            console.log('需要安装MetaMask!');
+            // 显示安装MetaMask的提示
+            return;
+        }
+        
+        // 修改这里：使用CONTRACT_ABI而不是ABI
+        contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+        usdtContract = new web3.eth.Contract(USDT_ABI, USDT_ADDRESS);
+        rewardTokenContract = new web3.eth.Contract(REWARD_TOKEN_ABI, REWARD_TOKEN_ADDRESS);
+        pancakeRouterContract = new web3.eth.Contract(ROUTER_ABI, ROUTER_ADDRESS);
+        
+        // 设置已初始化标志
+        isInitialized = true;
+        
+        // 初始化UI
+        updateUI();
+        
+        // 加载数据
+        await loadData();
+        
+        // 设置按钮事件
+        setupEventListeners();
+        
+        // 设置标签切换事件 (添加这一行)
+        setupTabEvents();
+        
+        // 设置定时刷新
+        setInterval(async () => {
+            try {
+                await loadData();
+            } catch (error) {
+                console.error('定时刷新数据失败:', error);
+            }
+        }, 30000);
+        
+        // 设置导航栏
+        setupNavigationBar();
+        
+        // 添加投资机制说明
+        setupInvestmentInfo();
+        
+    } catch (error) {
+        console.error('初始化应用失败:', error);
+    }
+}
+
+// 设置事件监听器
+function setupEventListeners() {
+    try {
+        // 确保元素存在再添加事件监听器
+        const approveUSDTBtn = document.getElementById('approveUSDTBtn');
+        if (approveUSDTBtn) {
+            approveUSDTBtn.addEventListener('click', approveUSDT);
+        }
+        
+        const stakeBtn = document.getElementById('stakeBtn');
+        if (stakeBtn) {
+            stakeBtn.addEventListener('click', stake);
+        }
+        
+        const setReferrerBtn = document.getElementById('setReferrerBtn');
+        if (setReferrerBtn) {
+            setReferrerBtn.addEventListener('click', setReferrer);
+        }
+        
+        const claimTokensBtn = document.getElementById('claimTokensBtn');
+        if (claimTokensBtn) {
+            claimTokensBtn.addEventListener('click', claimTokenRewards);
+        }
+        
+        const claimUSDTBtn = document.getElementById('claimUSDTBtn');
+        if (claimUSDTBtn) {
+            claimUSDTBtn.addEventListener('click', claimUSDTRewards);
+        }
+        
+        // 复制按钮
+        const copyAddressBtn = document.getElementById('copyAddressBtn');
+        if (copyAddressBtn) {
+            copyAddressBtn.addEventListener('click', () => {
+                const address = document.getElementById('walletAddress').textContent;
+                navigator.clipboard.writeText(address).then(() => {
+                    alert('地址已复制到剪贴板!');
+                });
+            });
+        }
+        
+        // 设置奖励标签切换事件
+        const rewardTabs = document.querySelectorAll('.reward-tab');
+        if (rewardTabs && rewardTabs.length > 0) {
+            rewardTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabType = tab.getAttribute('data-tab');
+                    if (tabType) {
+                        setTimeout(() => switchRewardTab(tabType), 0);
+                    }
+                });
+            });
+            
+            // 默认选中第一个标签
+            setTimeout(() => switchRewardTab(rewardTabs[0].getAttribute('data-tab')), 100);
+        } else {
+            console.warn('找不到奖励标签元素');
+        }
+        
+        // 获取邀请链接
+        const getInviteLinkBtn = document.getElementById('getInviteLinkBtn');
+        if (getInviteLinkBtn) {
+            getInviteLinkBtn.addEventListener('click', getInviteLink);
+        }
+        
+        // 检查URL中的推荐人地址
+        checkReferrerFromUrl();
+        
+        // 关闭钱包模态框
+        const closeWalletModalBtn = document.getElementById('closeWalletModal');
+        if (closeWalletModalBtn) {
+            closeWalletModalBtn.addEventListener('click', function() {
+                const modal = document.getElementById('connectWalletModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+            });
+        }
+
+        // 点击模态框背景关闭
+        const connectWalletModal = document.getElementById('connectWalletModal');
+        if (connectWalletModal) {
+            connectWalletModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
+        }
+    } catch (error) {
+        console.error('设置事件监听器失败:', error);
+    }
+}
+
+// 设置标签切换事件
+function setupTabEvents() {
+    const tabs = document.querySelectorAll('.reward-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // 移除所有标签的激活状态
+            tabs.forEach(t => {
+                t.classList.remove('text-primary', 'border-b-2', 'border-primary');
+                t.classList.add('text-gray-500');
+            });
+            
+            // 激活当前标签
+            tab.classList.remove('text-gray-500');
+            tab.classList.add('text-primary', 'border-b-2', 'border-primary');
+            
+            // 切换面板
+            const tabId = tab.getAttribute('data-tab');
+            switchRewardTab(tabId);
+        });
+    });
+
+    // 默认显示第一个标签
+    if (tabs.length > 0) {
+        const firstTab = tabs[0];
+        firstTab.click(); // 触发点击事件来激活第一个标签
+    }
+}
+
+// 切换奖励标签页
+function switchRewardTab(type) {
+    // 隐藏所有面板
+    document.querySelectorAll('.reward-panel').forEach(panel => {
+        panel.classList.add('hidden');
+    });
+    
+    // 显示选中的面板
+    const selectedPanel = document.getElementById(type);
+    if (selectedPanel) {
+        selectedPanel.classList.remove('hidden');
+        // 加载对应类型的奖励记录
+        loadRewardRecords(type);
+    }
+}
+
+// 加载奖励记录
+async function loadRewardRecords(type) {
+    try {
+        if (!accounts || !accounts[0]) {
+            console.log('未连接钱包，无法加载奖励记录');
+            return;
+        }
+
+        const containerId = `${type}List`;
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.error(`找不到容器: ${containerId}`);
+            return;
+        }
+
+        // 显示加载中
+        container.innerHTML = `
+            <div class="py-4 text-center text-gray-500">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                加载中...
+            </div>
+        `;
+
+        // 获取记录总数
+        const recordCount = await contract.methods.getUserRewardRecordCount(accounts[0]).call();
+        console.log('获取到记录总数:', recordCount);
+        
+        if (recordCount === 0) {
+            container.innerHTML = `
+                <div class="py-4 text-center text-gray-500">
+                    暂无${getRewardTypeName(type)}记录
+                </div>
+            `;
+            return;
+        }
+
+        // 获取最新的10条记录
+        const limit = Math.min(10, recordCount);
+        const startIndex = Math.max(0, recordCount - limit);
+        
+        const records = await contract.methods.getUserRewardRecords(
+            accounts[0],
+            startIndex,
+            limit
+        ).call();
+        
+        console.log('获取到的奖励记录:', records);
+
+        // 过滤对应类型的记录
+        const filteredRecords = [];
+        for (let i = 0; i < records.rewardTypes.length; i++) {
+            const record = {
+                timestamp: records.timestamps[i],
+                from: records.fromAddresses[i],
+                amount: records.amounts[i],
+                usdtReward: records.usdtRewards[i],
+                hashRateReward: records.hashRateRewards[i],
+                rewardType: records.rewardTypes[i]
+            };
+
+            // 根据奖励类型过滤记录
+            const rewardType = parseInt(record.rewardType);
+            if ((type === 'directReward' && rewardType === 1) ||
+                (type === 'stakingReward' && rewardType === 2) ||
+                (type === 'teamReward' && rewardType === 3)) {
+                filteredRecords.push(record);
+            }
+        }
+
+        console.log('过滤后的记录:', filteredRecords);
+
+        if (filteredRecords.length === 0) {
+            container.innerHTML = `
+                <div class="py-4 text-center text-gray-500">
+                    暂无${getRewardTypeName(type)}记录
+                </div>
+            `;
+            return;
+        }
+
+        // 生成HTML
+        const rewardsHTML = filteredRecords.map(record => {
+            const date = new Date(parseInt(record.timestamp) * 1000).toLocaleString();
+            const fromAddress = formatAddress(record.from);
+            const usdtReward = web3.utils.fromWei(record.usdtReward, 'ether');
+            const hashRateReward = web3.utils.fromWei(record.hashRateReward, 'ether');
+
+            let description = '';
+            let rewardDisplay = '';
+
+            switch(type) {
+                case 'directReward':
+                    description = `直推奖励`;
+                    rewardDisplay = `
+                        ${usdtReward > 0 ? `<p class="text-green-400 font-medium">+${usdtReward} USDT</p>` : ''}
+                        ${hashRateReward > 0 ? `<p class="text-blue-400 font-medium">+${hashRateReward} MH/s</p>` : ''}
+                        <p class="text-xs text-gray-400">来自 ${fromAddress}</p>
+                    `;
+                    break;
+                case 'stakingReward':
+                    description = `质押奖励`;
+                    rewardDisplay = `
+                        ${usdtReward > 0 ? `<p class="text-green-400 font-medium">+${usdtReward} USDT</p>` : ''}
+                        ${hashRateReward > 0 ? `<p class="text-blue-400 font-medium">+${hashRateReward} MH/s</p>` : ''}
+                        <p class="text-xs text-gray-400">日收益率 1%</p>
+                    `;
+                    break;
+                case 'teamReward':
+                    description = `团队奖励`;
+                    rewardDisplay = `
+                        ${usdtReward > 0 ? `<p class="text-green-400 font-medium">+${usdtReward} USDT</p>` : ''}
+                        ${hashRateReward > 0 ? `<p class="text-blue-400 font-medium">+${hashRateReward} MH/s</p>` : ''}
+                        <p class="text-xs text-gray-400">来自 ${fromAddress}</p>
+                    `;
+                    break;
+            }
+
+            return `
+                <div class="reward-item py-3 flex justify-between items-center">
+                    <div>
+                        <p class="font-medium">${description}</p>
+                        <p class="text-xs text-gray-400">${date}</p>
+                    </div>
+                    <div class="text-right">
+                        ${rewardDisplay}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = rewardsHTML;
+
+    } catch (error) {
+        console.error('加载奖励记录失败:', error);
+        const container = document.getElementById(`${type}List`);
+        if (container) {
+            container.innerHTML = `
+                <div class="py-4 text-center text-red-500">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    加载失败，请重试
+                </div>
+            `;
+        }
+    }
+}
+
+// 获取奖励类型名称
+function getRewardTypeName(type) {
+    switch(type) {
+        case 'directReward':
+            return '直推奖励';
+        case 'stakingReward':
+            return '算力奖励';
+        case 'teamReward':
+            return '团队奖励';
+        default:
+            return '奖励';
+    }
+}
+
+// 创建奖励记录HTML
+function createRewardRecordHTML(record, type) {
+    try {
+        const date = new Date(parseInt(record.timestamp) * 1000).toLocaleString();
+        const fromAddress = formatAddress(record.from);
+        const usdtReward = web3.utils.fromWei(record.usdtReward.toString(), 'ether');
+        const hashRateReward = web3.utils.fromWei(record.hashRateReward.toString(), 'ether');
+        
+        let description = '';
+        switch(type) {
+            case 'directReward':
+                description = `来自 ${fromAddress} 的直推奖励`;
+                break;
+            case 'stakingReward':
+                description = `质押代币奖励`;
+                break;
+            case 'teamReward':
+                description = `来自 ${fromAddress} 的团队奖励`;
+                break;
+        }
+
+        return `
+            <div class="py-3">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="text-sm font-medium">${description}</div>
+                        <div class="text-xs text-gray-500">${date}</div>
+                    </div>
+                    <div class="text-right">
+                        ${usdtReward > 0 ? `<div class="text-sm font-medium">+${usdtReward} USDT</div>` : ''}
+                        ${hashRateReward > 0 ? `<div class="text-sm font-medium">+${hashRateReward} MH/s</div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('创建奖励记录HTML失败:', error);
+        return `<div class="py-3 text-red-500">加载记录失败</div>`;
+    }
+}
+
+// 确保奖励容器元素存在
+function ensureRewardContainersExist() {
+    const rewardPanels = {
+        directReward: '直推奖励',
+        stakingReward: '质押奖励',
+        teamReward: '团队奖励'
+    };
+    
+    const rewardContent = document.querySelector('.bg-white.rounded-lg.shadow-sm.mb-6');
+    if (!rewardContent) {
+        console.error('找不到奖励内容容器');
+        return;
+    }
+    
+    // 检查并创建面板容器
+    for (let id in rewardPanels) {
+        let panel = document.getElementById(id);
+        if (!panel) {
+            console.log(`创建面板容器: ${id}`);
+            panel = document.createElement('div');
+            panel.id = id;
+            panel.className = 'reward-panel p-4' + (id !== 'directReward' ? ' hidden' : '');
+            
+            const infoBox = document.createElement('div');
+            infoBox.className = 'bg-blue-50 rounded-lg p-3 mb-4';
+            infoBox.innerHTML = `
+                <p class="text-sm text-blue-600">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    ${rewardPanels[id]}记录
+                </p>
+            `;
+            panel.appendChild(infoBox);
+            
+            const listContainer = document.createElement('div');
+            listContainer.id = `${id}List`;
+            listContainer.className = 'divide-y';
+            panel.appendChild(listContainer);
+            
+            rewardContent.appendChild(panel);
+        }
+        
+        // 检查列表容器
+        const listId = `${id}List`;
+        if (!document.getElementById(listId)) {
+            console.log(`创建列表容器: ${listId}`);
+            const listContainer = document.createElement('div');
+            listContainer.id = listId;
+            listContainer.className = 'divide-y';
+            panel.appendChild(listContainer);
+        }
+    }
+}
+
+// 加载用户信息
+async function loadUserInfo() {
+    try {
+        if (!isInitialized || !accounts || !accounts[0]) {
+            console.log('钱包未连接，无法加载用户信息');
+            return;
+        }
+        
+        // 获取用户基本信息
+        const userInfo = await contract.methods.users(accounts[0]).call();
+        
+        // 获取用户详细信息（包含待领取奖励）
+        const userDetails = await contract.methods.getUserInfo(accounts[0]).call();
+        
+        // 安全的数值转换
+        const stakedAmount = userInfo.stakedAmount ? web3.utils.fromWei(userInfo.stakedAmount.toString(), 'ether') : '0';
+        const hashRate = userInfo.hashRate ? web3.utils.fromWei(userInfo.hashRate.toString(), 'ether') : '0';
+        const pendingRewards = userDetails.pendingTokenRewards ? web3.utils.fromWei(userDetails.pendingTokenRewards.toString(), 'ether') : '0';
+        const pendingUSDT = userDetails.pendingUSDTRewards ? web3.utils.fromWei(userDetails.pendingUSDTRewards.toString(), 'ether') : '0';
+        const teamVolume = userInfo.teamVolume ? web3.utils.fromWei(userInfo.teamVolume.toString(), 'ether') : '0';
+        const level = userInfo.level || '0';
+        
+        // 更新UI元素
+        const stakedAmountElement = document.getElementById('stakedAmount');
+        const hashRateElement = document.getElementById('hashRate');
+        const pendingRewardsElement = document.getElementById('pendingRewards');
+        const pendingUSDTelement = document.getElementById('pendingUSDT');
+        const teamVolumeElement = document.getElementById('teamVolume');
+        const levelElement = document.getElementById('level');
+        
+        if (stakedAmountElement) stakedAmountElement.textContent = stakedAmount;
+        if (hashRateElement) hashRateElement.textContent = hashRate;
+        if (pendingRewardsElement) pendingRewardsElement.textContent = pendingRewards;
+        if (pendingUSDTelement) pendingUSDTelement.textContent = pendingUSDT;
+        if (teamVolumeElement) teamVolumeElement.textContent = teamVolume;
+        if (levelElement) levelElement.textContent = level;
+    } catch (error) {
+        console.error('加载用户信息失败:', error);
+    }
+}
+
+// 领取代币奖励
+async function claimTokenRewards() {
+    try {
+        if (!isInitialized || !accounts || !accounts[0]) {
+            alert('请先连接钱包');
+            return;
+        }
+        
+        console.log('开始领取代币奖励...');
+        
+        // 获取用户信息
+        const userInfo = await contract.methods.users(accounts[0]).call();
+        console.log('用户信息:', userInfo);
+        
+        // 检查用户是否激活
+        if (!userInfo.isActive) {
+            alert('用户未激活，无法领取奖励');
+            return;
+        }
+        
+        // 检查合约中的代币余额
+        const rewardTokenAddress = await contract.methods.rewardToken().call();
+        const rewardTokenContract = new web3.eth.Contract(REWARD_TOKEN_ABI, rewardTokenAddress);
+        const contractBalance = await rewardTokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
+        console.log('合约代币余额:', contractBalance);
+        
+        const totalRewards = web3.utils.toBN(userInfo.totalRewards?.toString() || '0');
+        const claimedRewards = web3.utils.toBN(userInfo.claimedRewards?.toString() || '0');
+        
+        console.log('总奖励:', totalRewards.toString());
+        console.log('已领取奖励:', claimedRewards.toString());
+        
+        // 安全检查：确保总奖励大于已领取奖励
+        if (totalRewards.lt(claimedRewards)) {
+            alert('奖励数据异常，请联系管理员');
+            return;
+        }
+        
+        const pendingRewards = totalRewards.sub(claimedRewards);
+        console.log('待领取奖励:', pendingRewards.toString());
+        
+        if (pendingRewards.isZero()) {
+            alert('没有可领取的代币奖励！');
+            return;
+        }
+        
+        // 检查合约余额是否足够
+        if (web3.utils.toBN(contractBalance).lt(pendingRewards)) {
+            alert('合约代币余额不足，请联系管理员');
+            return;
+        }
+        
+        // 计算手续费（5%）
+        const fee = pendingRewards.mul(web3.utils.toBN(500)).div(web3.utils.toBN(10000));
+        const netAmount = pendingRewards.sub(fee);
+        
+        console.log('手续费:', fee.toString());
+        console.log('实际到账:', netAmount.toString());
+        
+        // 将18位精度转换为9位精度（除以10^9）用于显示
+        const precisionAdjustment = web3.utils.toBN('1000000000'); // 10^9
+        const pendingRewardsAdjusted = pendingRewards.div(precisionAdjustment);
+        const feeAdjusted = fee.div(precisionAdjustment);
+        const netAmountAdjusted = netAmount.div(precisionAdjustment);
+        
+        // 显示确认对话框，使用9位精度显示
+        const confirmMessage = `确认领取代币奖励？\n总金额: ${web3.utils.fromWei(pendingRewardsAdjusted, 'gwei')} 代币\n手续费: ${web3.utils.fromWei(feeAdjusted, 'gwei')} 代币\n实际到账: ${web3.utils.fromWei(netAmountAdjusted, 'gwei')} 代币`;
+        
+        if (!confirm(confirmMessage)) {
+            console.log('用户取消领取');
+            return;
+        }
+        
+        console.log('调用合约claimTokenRewards函数...');
+        
+        // 调用合约领取函数
+        const tx = await contract.methods.claimTokenRewards().send({ 
+            from: accounts[0],
+            gas: 300000 // 设置足够的gas限制
+        });
+        
+        console.log('交易成功:', tx);
+        
+        alert(`代币奖励领取成功！\n总金额: ${web3.utils.fromWei(pendingRewardsAdjusted, 'gwei')} 代币\n手续费: ${web3.utils.fromWei(feeAdjusted, 'gwei')} 代币\n实际到账: ${web3.utils.fromWei(netAmountAdjusted, 'gwei')} 代币`);
+        
+        // 更新显示
+        await loadData();
+    } catch (error) {
+        console.error('领取代币奖励失败:', error);
+        if (error.message.includes('User denied transaction signature')) {
+            alert('您已取消交易签名');
+        } else if (error.message.includes('insufficient funds')) {
+            alert('钱包余额不足，无法支付gas费用');
+        } else if (error.message.includes('SafeMath: subtraction overflow')) {
+            alert('奖励数据异常，请联系管理员');
+        } else if (error.message.includes('Transaction has been reverted by the EVM')) {
+            alert('交易被合约拒绝，可能原因：\n1. 奖励金额为0\n2. 用户未激活\n3. 合约余额不足\n4. 合约权限问题\n请检查后重试');
+        } else {
+            alert('领取失败，请重试。错误信息: ' + error.message);
+        }
+    }
+}
+
+// 添加别名函数以保持与HTML中的调用一致
+async function claimTokens() {
+    return claimTokenRewards();
+}
+
+// 领取USDT奖励
+async function claimUSDTRewards() {
+    try {
+        // 先检查用户信息
+        const userInfo = await contract.methods.getUserInfo(accounts[0]).call();
+        console.log('用户信息:', userInfo);
+        
+        // 检查合约USDT余额
+        const contractBalance = await contract.methods.getContractUSDTBalance().call();
+        console.log('合约USDT余额:', contractBalance);
+        
+        // 检查待领取金额
+        console.log('待领取USDT:', userInfo.pendingUSDTRewards);
+        
+        // 执行提现
+        const tx = await contract.methods.claimUSDTRewards().send({ 
+            from: accounts[0],
+            gas: 300000 // 设置足够的gas限制
+        });
+        console.log('交易成功:', tx);
+        
+        alert('USDT奖励领取成功！');
+        await loadUserInfo();
+    } catch (error) {
+        console.error('领取USDT奖励失败:', error);
+        if (error.message.includes('User denied transaction signature')) {
+            alert('您已取消交易签名');
+        } else if (error.message.includes('insufficient funds')) {
+            alert('钱包余额不足，无法支付gas费用');
+        } else if (error.message.includes('Transaction has been reverted by the EVM')) {
+            alert('交易被合约拒绝，可能原因：\n1. 奖励金额为0\n2. 用户未激活\n3. 合约余额不足\n4. 合约权限问题\n请检查后重试');
+        } else {
+            alert('领取失败，请重试。错误信息: ' + error.message);
+        }
+    }
+}
+
+// 质押
+async function stake() {
+    try {
+        const amount = document.getElementById('stakeAmount').value;
+        if (!amount || amount < 0.000002 || amount % 0.01 == 0) {
+            alert('请输入有效的质押金额（最小200 USDT，100的倍数）');
+            return;
+        }
+        
+        const weiAmount = web3.utils.toWei(amount, 'ether');
+        
+        // 检查USDT授权
+        const allowance = await usdtContract.methods.allowance(accounts[0], CONTRACT_ADDRESS).call();
+        if (web3.utils.toBN(allowance).lt(web3.utils.toBN(weiAmount))) {
+            alert('请先授权USDT');
+            return;
+        }
+        
+        // 执行质押
+        await contract.methods.stake(weiAmount).send({ from: accounts[0] });
+        alert('质押成功！');
+        await loadUserInfo();
+    } catch (error) {
+        console.error('质押失败:', error);
+        alert('质押失败，请重试');
+    }
+}
+
+// 监听钱包连接
+window.ethereum.on('accountsChanged', function (accounts) {
+    document.getElementById('walletAddress').textContent = accounts[0];
+    loadUserInfo(accounts[0]);
+});
+
+// 监听网络变化
+window.ethereum.on('chainChanged', function (chainId) {
+    window.location.reload();
+});
+
+// 页面加载完成后初始化
+window.addEventListener('load', init);
+
+// 更新UI显示
+function updateUI() {
+    try {
+        if (!accounts || !accounts[0]) return;
+        
+        // 更新钱包地址显示
+        const walletAddress = document.getElementById('walletAddress');
+        if (walletAddress) {
+            walletAddress.textContent = accounts[0];
+        }
+        
+        // 更新系统信息
+        updateSystemInfo();
+        
+        // 更新用户信息
+        loadUserInfo();
+    } catch (error) {
+        console.error('更新UI失败:', error);
+    }
+}
+
+// 更新系统信息
+async function updateSystemInfo() {
+    try {
+        const tokenPrice = await contract.methods.tokenPrice().call();
+        const withdrawFee = await contract.methods.withdrawFee().call();
+        
+        // 更新代币价格显示
+        const tokenPriceElement = document.getElementById('tokenPrice');
+        if (tokenPriceElement) {
+            tokenPriceElement.textContent = web3.utils.fromWei(tokenPrice, 'ether') + ' USDT';
+        }
+        
+        // 更新手续费显示
+        const withdrawFeeElement = document.getElementById('withdrawFee');
+        if (withdrawFeeElement) {
+            withdrawFeeElement.textContent = (withdrawFee / 100).toFixed(1) + '%';
+        }
+    } catch (error) {
+        console.error('更新系统信息失败:', error);
+    }
+}
+
+// USDT授权
+async function approveUSDT() {
+    try {
+        const amount = document.getElementById('stakeAmount').value;
+        if (!amount || amount < 0.00001) {
+            alert('请输入有效的质押金额（最小200 USDT）');
+            return;
+        }
+        
+        const weiAmount = web3.utils.toWei(amount, 'ether');
+        await usdtContract.methods.approve(CONTRACT_ADDRESS, weiAmount)
+            .send({ from: accounts[0] });
+        
+        alert('USDT授权成功！');
+    } catch (error) {
+        console.error('USDT授权失败:', error);
+        alert('USDT授权失败，请重试');
+    }
+}
+
+// 设置推荐人
+async function setReferrer() {
+    try {
+        const referrerAddress = document.getElementById('referrerAddress').value;
+        await contract.methods.setReferrer(referrerAddress).send({ from: accounts[0] });
+        alert('推荐人设置成功！');
+        await loadUserInfo();
+    } catch (error) {
+        console.error('设置推荐人失败:', error);
+        alert('设置推荐人失败，请重试');
+    }
+}
+
+// 更新奖励显示
+async function updateRewards() {
+    try {
+        if (!accounts || !accounts[0]) {
+            console.log('未连接钱包，无法更新奖励');
+            return;
+        }
+        
+        console.log('开始更新奖励信息...');
+        
+        // 获取用户信息
+        const userInfo = await contract.methods.users(accounts[0]).call();
+        console.log('获取到的用户信息:', userInfo);
+        
+        // 获取用户详细信息（包含待领取奖励）
+        const userDetails = await contract.methods.getUserInfo(accounts[0]).call();
+        console.log('获取到的用户详细信息:', userDetails);
+        
+        // 待领取代币奖励 = 总奖励 - 已领取奖励
+        const totalRewards = web3.utils.toBN(userInfo.totalRewards || '0');
+        const claimedRewards = web3.utils.toBN(userInfo.claimedRewards || '0');
+        const pendingTokenRewards = totalRewards.sub(claimedRewards);
+        
+        // 待领取USDT奖励
+        const pendingUSDT = userDetails.pendingUSDTRewards 
+            ? web3.utils.fromWei(userDetails.pendingUSDTRewards.toString(), 'ether') 
+            : '0';
+        
+        // 用户算力
+        const hashRate = userInfo.hashRate 
+            ? web3.utils.fromWei(userInfo.hashRate.toString(), 'ether') 
+            : '0';
+        
+        // 团队算力
+        const teamHashRate = userDetails.teamHashRate 
+            ? web3.utils.fromWei(userDetails.teamHashRate.toString(), 'ether') 
+            : '0';
+
+        // 用户等级
+        const userLevel = userInfo.level ? `V${userInfo.level}` : 'V0';
+        
+        // 更新UI显示
+        updateElementText('pendingRewards', web3.utils.fromWei(pendingTokenRewards.toString(), 'ether'));
+        updateElementText('pendingUSDT', pendingUSDT);
+        updateElementText('hashRate', hashRate);
+        updateElementText('teamHashRate', teamHashRate);
+        updateElementText('userLevel', userLevel);
+        
+        // 获取直推奖励记录
+        const rewardRecords = await contract.methods.getUserRewardRecords(accounts[0], 0, 10).call();
+        console.log('获取到的奖励记录:', rewardRecords);
+        
+        // 计算直推奖励的USDT
+        let totalReferralUSDT = '0';
+        if (rewardRecords && rewardRecords.usdtRewards) {
+            for (let i = 0; i < rewardRecords.rewardTypes.length; i++) {
+                if (rewardRecords.rewardTypes[i] === '1') { // 1表示直推奖励
+                    totalReferralUSDT = web3.utils.fromWei(rewardRecords.usdtRewards[i], 'ether');
+                }
+            }
+        }
+        
+        // 更新直推奖励显示
+        updateElementText('referralUSDT', totalReferralUSDT);
+        
+        console.log('奖励信息更新完成');
+        
+    } catch (error) {
+        console.error('更新奖励显示失败:', error);
+    }
+}
+
+// 辅助函数：更新元素文本内容
+function updateElementText(elementId, text) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = text;
+    }
+}
+
+// 从合约获取团队信息
+async function loadTeamInfoData() {
+    try {
+        if (!accounts || !accounts[0]) {
+            return { memberCount: 0, volume: '0', referralHashRate: '0', referralUSDT: '0' };
+        }
+        
+        // 获取团队成员数量
+        const memberCount = await contract.methods.getTeamMemberCount(accounts[0]).call();
+        
+        // 获取用户信息
+        const userInfo = await contract.methods.users(accounts[0]).call();
+        
+        // 获取总算力
+        const totalHashRate = await contract.methods.getTotalHashRate(accounts[0]).call();
+        
+        // 获取用户详细信息（包含待领取奖励）
+        const userDetails = await contract.methods.getUserInfo(accounts[0]).call();
+        
+        console.log('获取到的团队信息:', {
+            memberCount,
+            userInfo,
+            totalHashRate,
+            userDetails
+        });
+        
+        // 格式化团队信息
+        return {
+            memberCount: memberCount || 0,
+            volume: web3.utils.fromWei(userInfo.teamVolume || '0', 'ether'),
+            referralHashRate: web3.utils.fromWei(totalHashRate || '0', 'ether'),
+            referralUSDT: web3.utils.fromWei(userDetails.pendingUSDTRewards || '0', 'ether')
+        };
+    } catch (error) {
+        console.error('获取团队信息失败:', error);
+        return { memberCount: 0, volume: '0', referralHashRate: '0', referralUSDT: '0' };
+    }
+}
+
+// 修改loadTeamInfo函数使用新的loadTeamInfoData函数
+async function loadTeamInfo() {
+    try {
+        if (!accounts || !accounts[0]) {
+            console.log('未连接钱包，无法加载团队信息');
+            return;
+        }
+        
+        console.log('开始加载团队信息...');
+        
+        // 1. 获取用户基本信息
+        const userInfo = await contract.methods.users(accounts[0]).call();
+        console.log('用户基本信息:', userInfo);
+        
+        // 2. 获取用户详细信息
+        const userDetails = await contract.methods.getUserInfo(accounts[0]).call();
+        console.log('用户详细信息:', userDetails);
+        
+        // 3. 获取团队成员数量
+        const memberCount = await contract.methods.getTeamMemberCount(accounts[0]).call();
+        console.log('团队成员数量:', memberCount);
+        
+        // 4. 更新UI显示
+        // 团队人数
+        updateElementValue('teamMemberCount', memberCount);
+        
+        // 团队算力 - 从userDetails.teamHashRate获取
+        const teamHashRate = web3.utils.fromWei(userDetails.teamHashRate || '0', 'ether');
+        updateElementValue('teamHashRate', `${teamHashRate} MH`);
+        
+        // 用户等级
+        updateElementValue('userLevel', `V${userInfo.level || '0'}`);
+        
+        // 直推USDT - 从userInfo.pendingUSDT获取
+        const pendingUSDT = web3.utils.fromWei(userInfo.pendingUSDT || '0', 'ether');
+        updateElementValue('referralUSDT', pendingUSDT);
+        
+        // 更新本周数据
+        const weeklyMembersElement = document.querySelector('#teamMemberCount + p');
+        if (weeklyMembersElement) {
+            weeklyMembersElement.textContent = `+${memberCount} 本周`;
+        }
+        
+        const weeklyHashRateElement = document.querySelector('#teamHashRate + p');
+        if (weeklyHashRateElement) {
+            weeklyHashRateElement.textContent = `+${teamHashRate} 本周`;
+        }
+        
+        const dailyUSDTElement = document.querySelector('#referralUSDT + p');
+        if (dailyUSDTElement) {
+            dailyUSDTElement.textContent = `+${pendingUSDT} 今日`;
+        }
+        
+        // 升级需求
+        try {
+            const currentLevel = parseInt(userInfo.level) || 0;
+            const nextLevel = currentLevel + 1;
+            const nextLevelRequirement = await contract.methods.teamThresholds(nextLevel).call();
+            const levelUpElement = document.querySelector('#userLevel + p');
+            if (levelUpElement) {
+                levelUpElement.textContent = `升级需 ${web3.utils.fromWei(nextLevelRequirement, 'ether')}`;
+            }
+        } catch (error) {
+            console.error('获取升级需求失败:', error);
+            const levelUpElement = document.querySelector('#userLevel + p');
+            if (levelUpElement) {
+                levelUpElement.textContent = '升级需 0';
+            }
+        }
+        
+        console.log('团队信息加载完成');
+        
+    } catch (error) {
+        console.error('加载团队信息失败:', error);
+        // 错误处理 - 显示默认值
+        const defaultValues = {
+            'teamMemberCount': '0',
+            'teamHashRate': '0 MH/s',
+            'userLevel': 'V0',
+            'referralUSDT': '0'
+        };
+        
+        Object.entries(defaultValues).forEach(([id, value]) => {
+            updateElementValue(id, value);
+        });
+    }
+}
+
+// 辅助函数：安全地更新元素值
+function updateElementValue(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = value;
+        console.log(`更新元素 ${elementId}:`, value);
+    } else {
+        console.warn(`元素未找到: ${elementId}`);
+    }
+}
+
+// 加载质押投资明细
+async function loadStakingDetails() {
+    try {
+        if (!isInitialized || !accounts || !accounts[0]) {
+            console.log('未连接钱包，无法加载质押明细');
+            return;
+        }
+        
+        console.log('开始加载质押明细...');
+        
+        // 获取用户信息
+        const userInfo = await contract.methods.users(accounts[0]).call();
+        
+        // 获取质押金额
+        const stakedAmount = web3.utils.fromWei(userInfo.stakedAmount.toString(), 'ether');
+        
+        // 获取投资时间
+        const investmentTime = new Date(userInfo.investmentTime * 1000).toLocaleString();
+        
+        // 获取算力倍数
+        const multiplier = userInfo.multiplier.toString();
+        
+        // 更新UI显示
+        const stakingDetailsElement = document.getElementById('stakingDetails');
+        if (stakingDetailsElement) {
+            stakingDetailsElement.innerHTML = `
+                <div class="list-group-item">
+                    <div>质押金额: ${stakedAmount} USDT</div>
+                    <div>投资时间: ${investmentTime}</div>
+                    <div>算力倍数: ${multiplier}倍</div>
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('加载质押明细失败:', error);
+    }
+}
+
+// 在页面加载和数据更新时调用
+async function loadData() {
+    try {
+        if (!isInitialized || !accounts || !accounts[0]) {
+            console.log('等待初始化完成...');
+            return;
+        }
+        
+        // 获取系统信息
+        const systemInfo = await contract.methods.getSystemInfo().call();
+        console.log('系统信息:', systemInfo);
+        
+        // 获取总质押量
+        const totalStaked = await contract.methods.totalStaked().call();
+        console.log('总质押量:', totalStaked);
+        
+        // 更新UI显示
+        document.getElementById('tokenPrice').textContent = 
+            `${web3.utils.fromWei(systemInfo.currentTokenPrice, 'ether')} MH`;
+        document.getElementById('totalBurned').textContent = 
+            web3.utils.fromWei(systemInfo.totalBurned, 'ether');
+        document.getElementById('totalStaked').textContent = 
+            `${web3.utils.fromWei(totalStaked, 'ether')} MH`;
+        
+        // 加载其他数据
+        await loadUserInfo();
+        await updateRewards();
+        await loadRewardRecords();
+        await loadTeamInfo();
+        await loadStakingDetails();
+        
+        console.log('数据加载完成');
+        
+    } catch (error) {
+        console.error('加载数据失败:', error);
+        // 错误处理 - 显示默认值
+        document.getElementById('tokenPrice').textContent = '0 USDT';
+        document.getElementById('totalBurned').textContent = '0';
+        document.getElementById('totalStaked').textContent = '0 USDT';
+    }
+}
+
+// 添加释放奖励筛选函数
+function filterReleaseRewards(type) {
+    const releaseItems = document.querySelectorAll('#releaseRewardList .reward-item');
+    
+    releaseItems.forEach(item => {
+        const itemType = item.getAttribute('data-release-type');
+        if (type === 'all' || type === itemType) {
+            item.classList.remove('hidden');
+        } else {
+            item.classList.add('hidden');
+        }
+    });
+}
+
+// 在document.addEventListener('DOMContentLoaded', ...)中添加
+// 释放奖励类型切换按钮事件监听
+const releaseTypeBtns = document.querySelectorAll('.release-type-btn');
+releaseTypeBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        // 移除所有按钮的激活状态
+        releaseTypeBtns.forEach(b => {
+            b.classList.remove('bg-primary', 'text-white');
+            b.classList.add('bg-gray-100', 'text-gray-500');
+        });
+        
+        // 添加当前按钮的激活状态
+        e.target.classList.remove('bg-gray-100', 'text-gray-500');
+        e.target.classList.add('bg-primary', 'text-white');
+        
+        // 根据类型筛选显示释放奖励
+        const type = e.target.getAttribute('data-type');
+        filterReleaseRewards(type);
+    });
+});
+
+// 格式化地址显示 (简化地址)
+function formatAddress(address) {
+    if (!address || typeof address !== 'string') return '未知地址';
+    return address.substring(0, 6) + '...' + address.substring(address.length - 4);
+}
+
+// 获取邀请链接
+function getInviteLink() {
+    try {
+        if (!accounts || !accounts[0]) {
+            alert('请先连接钱包');
+            return;
+        }
+        
+        const currentUrl = window.location.href.split('?')[0];
+        const inviteLink = `${currentUrl}?ref=${accounts[0]}`;
+        
+        // 更新输入框的值
+        const inviteLinkInput = document.getElementById('inviteLink');
+        if (inviteLinkInput) {
+            inviteLinkInput.value = inviteLink;
+        }
+        
+        // 显示邀请模态框
+        const inviteModal = document.getElementById('inviteModal');
+        if (inviteModal) {
+            inviteModal.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('获取邀请链接失败:', error);
+        alert('获取邀请链接失败，请重试');
+    }
+}
+
+// 复制邀请链接
+document.getElementById('copyInviteLink')?.addEventListener('click', function() {
+    const inviteLinkInput = document.getElementById('inviteLink');
+    if (inviteLinkInput && inviteLinkInput.value) {
+        navigator.clipboard.writeText(inviteLinkInput.value)
+            .then(() => {
+                alert('邀请链接已复制到剪贴板！');
+            })
+            .catch(() => {
+                alert('复制失败，请手动复制链接');
+            });
+    }
+});
+
+// 在钱包连接成功后自动更新邀请链接
+window.ethereum.on('accountsChanged', function (newAccounts) {
+    accounts = newAccounts;
+    if (accounts && accounts[0]) {
+        const currentUrl = window.location.href.split('?')[0];
+        const inviteLink = `${currentUrl}?ref=${accounts[0]}`;
+        const inviteLinkInput = document.getElementById('inviteLink');
+        if (inviteLinkInput) {
+            inviteLinkInput.value = inviteLink;
+        }
+    }
+});
+
+// 检查URL参数中的推荐人地址
+function checkReferrerFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refAddress = urlParams.get('ref');
+    if (refAddress) {
+        const referrerInput = document.getElementById('referrerAddress');
+        if (referrerInput) {
+            referrerInput.value = refAddress;
+        }
+    }
+}
+
+// 修改setupNavigationBar函数
+function setupNavigationBar() {
+    // 获取游戏标签
+    const gameTab = document.querySelector('[data-tab="gameTab"]');
+    const gameContent = document.getElementById('gameTab');
+    
+    // 修改游戏标签显示
+    if (gameTab) {
+        // 更新游戏标签的显示
+        gameTab.innerHTML = `
+            <i class="fas fa-gamepad text-xl mb-1"></i>
+            <p class="text-xs">游戏</p>
+        `;
+        
+        // 添加点击事件
+        gameTab.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // 显示游戏内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            if (gameContent) {
+                gameContent.classList.add('active');
+            }
+            
+            // 更新标签状态
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.remove('active-tab');
+                tab.querySelector('i').classList.remove('text-purple-400');
+                tab.querySelector('p').classList.remove('text-purple-400');
+            });
+            
+            gameTab.classList.add('active-tab');
+            gameTab.querySelector('i').classList.add('text-purple-400');
+            gameTab.querySelector('p').classList.add('text-purple-400');
+            
+            // 显示提示
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-3 rounded-xl z-50';
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-clock text-yellow-400 mr-2"></i>
+                    <span>游戏功能暂未开放</span>
+                </div>
+            `;
+            
+            // 添加到页面
+            document.body.appendChild(toast);
+            
+            // 2秒后移除提示
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 2000);
+        });
+    }
+
+    // 设置机制标签页的点击事件
+    const mechanismTab = document.querySelector('[data-tab="mechanismTab"]');
+    if (mechanismTab) {
+        mechanismTab.addEventListener('click', function() {
+            // 隐藏所有内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 显示机制内容
+            const mechanismContent = document.getElementById('mechanismTab');
+            if (mechanismContent) {
+                mechanismContent.classList.add('active');
+            }
+            
+            // 更新标签状态
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.remove('active-tab');
+                tab.querySelector('i').classList.remove('text-purple-400');
+                tab.querySelector('p').classList.remove('text-purple-400');
+            });
+            
+            this.classList.add('active-tab');
+            this.querySelector('i').classList.add('text-purple-400');
+            this.querySelector('p').classList.add('text-purple-400');
+        });
+    }
+}
+
+// 修改setupInvestmentInfo函数
+function setupInvestmentInfo() {
+    const rankTab = document.getElementById('rankTab');
+    if (!rankTab) return;
+    
+    // 清空原有内容
+    const rankContent = rankTab.querySelector('.my-4');
+    if (rankContent) {
+        rankContent.innerHTML = '';
+    }
+    
+    // 创建logo容器 - 增加尺寸
+    const logoContainer = document.createElement('div');
+    logoContainer.className = 'flex justify-center mb-8'; // 增加底部间距
+    logoContainer.innerHTML = `
+        <div class="w-48 h-48 relative"> <!-- 从w-32 h-32增加到w-48 h-48 -->
+                    <img src="./872d9f10afc9c465cd1f360b81d6e0d.jpg" alt="Logo" class="w-full h-full coin-spin rounded-full">
+                    <div class="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full"></div>
+                </div>
+    `;
+    
+    // 创建投资机制说明卡片
+    const investmentInfoCard = document.createElement('div');
+    investmentInfoCard.className = 'card p-6'; // 增加内边距
+    investmentInfoCard.innerHTML = `
+        <h2 class="text-xl font-semibold mb-4 flex items-center"> <!-- 增加标题字体大小和底部间距 -->
+            <i class="fas fa-chart-line text-yellow-400 mr-3 text-2xl"></i> <!-- 增加图标大小 -->
+                    <span>投入机制说明</span>
+                </h2>
+        <div class="space-y-4"> <!-- 增加卡片间距 -->
+            <div class="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 p-4 rounded-xl"> <!-- 增加内边距 -->
+                        <div class="flex items-center justify-between mb-2">
+                    <span class="text-lg">每日释放比例</span> <!-- 增加字体大小 -->
+                    <span class="text-lg text-green-400 font-semibold">1%</span> <!-- 增加字体大小和粗细 -->
+                        </div>
+                <div class="text-base text-gray-400">最低投入额度：200 USDT</div> <!-- 增加字体大小 -->
+                    </div>
+                    
+            <div class="grid grid-cols-1 gap-3"> <!-- 增加卡片间距 -->
+                <div class="bg-gradient-to-r from-purple-900/30 to-pink-900/30 p-5 rounded-xl"> <!-- 增加内边距 -->
+                            <div class="flex justify-between items-center">
+                        <span class="text-lg">200-499 USDT</span> <!-- 增加字体大小 -->
+                        <span class="text-lg text-yellow-400 font-semibold">1.5倍算力</span> <!-- 增加字体大小和粗细 -->
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-pink-900/30 to-red-900/30 p-5 rounded-xl">
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg">500-999 USDT</span>
+                                <span class="text-lg text-yellow-400 font-semibold">2倍算力</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-orange-900/30 to-amber-900/30 p-5 rounded-xl">
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg">1000-1999 USDT</span>
+                                <span class="text-lg text-yellow-400 font-semibold">2.5倍算力</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-green-900/30 to-emerald-900/30 p-5 rounded-xl">
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg">2000+ USDT</span>
+                                <span class="text-lg text-yellow-400 font-semibold">3倍算力</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-gray-900/30 to-slate-900/30 p-4 rounded-xl">
+                <p class="text-base text-gray-300"> <!-- 增加字体大小 -->
+                    <i class="fas fa-lightbulb text-yellow-400 mr-2 text-lg"></i> <!-- 增加图标大小 -->
+                            投金额越高，出局倍数越大。每日稳定释放1%，让您的收益最大化！
+                        </p>
+                    </div>
+                </div>
+    `;
+    
+    // 将logo和投资机制说明添加到页面
+    if (rankContent) {
+        rankContent.appendChild(logoContainer);
+        rankContent.appendChild(investmentInfoCard);
+    }
+}
+
+// 添加CSS样式
+const style = document.createElement('style');
+style.textContent += `
+    .coin-spin {
+        animation: spin 8s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotateY(0deg); }
+        100% { transform: rotateY(360deg); }
+    }
+    
+    /* 添加提示框动画 */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translate(-50%, -40%); }
+        to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+    
+    .fixed {
+        animation: fadeIn 0.3s ease;
+    }
+`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>
